@@ -58,16 +58,30 @@ async function verifyEmail() {
             body: JSON.stringify({ email })
         });
 
-        const data = await response.json();
+        // Handle all status codes (200, 202, 400, 500, etc.)
+        let data;
+        try {
+            data = await response.json();
+        } catch (parseError) {
+            throw new Error(`Server returned invalid response: ${response.status} ${response.statusText}`);
+        }
 
-        if (data.success !== undefined) {
+        // Backend returns 400 for invalid emails, but still includes the data
+        // So we check if data.data exists (the verification result)
+        if (data.data) {
             displayResult(data.data);
+        } else if (data.error) {
+            showError(data.error + (data.message ? ': ' + data.message : ''));
         } else {
-            showError(data.error || 'An error occurred');
+            showError('Unexpected response from server');
         }
     } catch (error) {
         console.error('Error:', error);
-        showError('Failed to connect to the server. Make sure the backend is running on port 3000.');
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            showError('Failed to connect to the server. Make sure the backend is running on port 3000.');
+        } else {
+            showError(error.message || 'An error occurred while verifying the email');
+        }
     } finally {
         setLoading(false);
     }
