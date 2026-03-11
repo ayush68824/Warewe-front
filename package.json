@@ -1,0 +1,15 @@
+{
+  "name": "email-verification-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for Email Verification API",
+  "scripts": {
+    "start": "npx http-server -p 8080 -c-1",
+    "serve": "npx http-server -p 8080 -c-1"
+  },
+  "keywords": ["email", "verification", "frontend"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

@@ -1,0 +1,228 @@
+// API Configuration
+const API_BASE_URL = 'http://localhost:3000';
+
+// DOM Elements
+const emailInput = document.getElementById('emailInput');
+const verifyBtn = document.getElementById('verifyBtn');
+const resultSection = document.getElementById('resultSection');
+const errorMsg = document.getElementById('errorMsg');
+
+const typoInput = document.getElementById('typoInput');
+const typoBtn = document.getElementById('typoBtn');
+const typoResult = document.getElementById('typoResult');
+
+// Result display elements
+const resultBadge = document.getElementById('resultBadge');
+const resultEmail = document.getElementById('resultEmail');
+const resultStatus = document.getElementById('resultStatus');
+const resultSubresult = document.getElementById('resultSubresult');
+const resultDomain = document.getElementById('resultDomain');
+const resultMX = document.getElementById('resultMX');
+const resultTime = document.getElementById('resultTime');
+const resultError = document.getElementById('resultError');
+const resultSuggestion = document.getElementById('resultSuggestion');
+const resultTimestamp = document.getElementById('resultTimestamp');
+const mxRow = document.getElementById('mxRow');
+const errorRow = document.getElementById('errorRow');
+const suggestionRow = document.getElementById('suggestionRow');
+
+// Verify email function
+async function verifyEmail() {
+    const email = emailInput.value.trim();
+    
+    // Validation
+    if (!email) {
+        showError('Please enter an email address');
+        return;
+    }
+
+    // Basic email format check
+    if (!email.includes('@')) {
+        showError('Please enter a valid email address');
+        return;
+    }
+
+    // Hide previous results and errors
+    hideError();
+    hideResult();
+
+    // Show loading state
+    setLoading(true);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/verify`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+
+        if (data.success !== undefined) {
+            displayResult(data.data);
+        } else {
+            showError(data.error || 'An error occurred');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showError('Failed to connect to the server. Make sure the backend is running on port 3000.');
+    } finally {
+        setLoading(false);
+    }
+}
+
+// Check typo function
+async function checkTypo() {
+    const email = typoInput.value.trim();
+    
+    if (!email) {
+        typoResult.style.display = 'none';
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/did-you-mean`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.data) {
+            displayTypoResult(data.data);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        typoResult.innerHTML = '<p style="color: #e74c3c;">Failed to connect to the server.</p>';
+        typoResult.style.display = 'block';
+    }
+}
+
+// Display verification result
+function displayResult(data) {
+    resultEmail.textContent = data.email || 'N/A';
+    resultStatus.textContent = data.result || 'N/A';
+    resultSubresult.textContent = data.subresult || 'N/A';
+    resultDomain.textContent = data.domain || 'N/A';
+    resultTime.textContent = `${data.executiontime}s`;
+    resultTimestamp.textContent = new Date(data.timestamp).toLocaleString();
+
+    // MX Records
+    if (data.mxRecords && data.mxRecords.length > 0) {
+        resultMX.textContent = data.mxRecords.join(', ');
+        mxRow.style.display = 'flex';
+    } else {
+        mxRow.style.display = 'none';
+    }
+
+    // Error
+    if (data.error) {
+        resultError.textContent = data.error;
+        errorRow.style.display = 'flex';
+    } else {
+        errorRow.style.display = 'none';
+    }
+
+    // Suggestion
+    if (data.didyoumean) {
+        resultSuggestion.textContent = data.didyoumean;
+        resultSuggestion.onclick = () => {
+            emailInput.value = data.didyoumean;
+            verifyEmail();
+        };
+        suggestionRow.style.display = 'flex';
+    } else {
+        suggestionRow.style.display = 'none';
+    }
+
+    // Badge styling
+    resultBadge.textContent = data.result || 'unknown';
+    resultBadge.className = `badge ${data.result || 'unknown'}`;
+
+    // Show result section
+    resultSection.style.display = 'block';
+    resultSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Display typo result
+function displayTypoResult(data) {
+    if (data.hasSuggestion) {
+        typoResult.className = 'typo-result has-suggestion';
+        typoResult.innerHTML = `
+            <p><strong>Original:</strong> ${data.original}</p>
+            <p><strong>Suggestion:</strong> <span style="color: #667eea; font-weight: 600;">${data.suggestion}</span></p>
+            <button class="btn-primary" style="margin-top: 10px; width: 100%;" onclick="useSuggestion('${data.suggestion}')">
+                Use This Email
+            </button>
+        `;
+    } else {
+        typoResult.className = 'typo-result no-suggestion';
+        typoResult.innerHTML = `
+            <p>No typo detected. "${data.original}" looks correct!</p>
+        `;
+    }
+    typoResult.style.display = 'block';
+}
+
+// Use suggestion
+function useSuggestion(email) {
+    emailInput.value = email;
+    typoInput.value = email;
+    verifyEmail();
+}
+
+// Show error message
+function showError(message) {
+    errorMsg.textContent = message;
+    errorMsg.style.display = 'block';
+}
+
+// Hide error message
+function hideError() {
+    errorMsg.style.display = 'none';
+}
+
+// Hide result section
+function hideResult() {
+    resultSection.style.display = 'none';
+}
+
+// Set loading state
+function setLoading(loading) {
+    verifyBtn.disabled = loading;
+    const btnText = verifyBtn.querySelector('.btn-text');
+    const btnLoader = verifyBtn.querySelector('.btn-loader');
+    
+    if (loading) {
+        btnText.style.display = 'none';
+        btnLoader.style.display = 'inline';
+    } else {
+        btnText.style.display = 'inline';
+        btnLoader.style.display = 'none';
+    }
+}
+
+// Event Listeners
+verifyBtn.addEventListener('click', verifyEmail);
+emailInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        verifyEmail();
+    }
+});
+
+typoBtn.addEventListener('click', checkTypo);
+typoInput.addEventListener('input', () => {
+    if (typoInput.value.trim()) {
+        checkTypo();
+    } else {
+        typoResult.style.display = 'none';
+    }
+});
+
+// Make useSuggestion available globally
+window.useSuggestion = useSuggestion;

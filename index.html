@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification Tool</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📧 Email Verification</h1>
+            <p class="subtitle">Verify email addresses using SMTP protocol</p>
+        </header>
+
+        <main>
+            <div class="card">
+                <div class="input-section">
+                    <label for="emailInput">Enter Email Address:</label>
+                    <div class="input-group">
+                        <input 
+                            type="email" 
+                            id="emailInput" 
+                            placeholder="user@example.com"
+                            autocomplete="off"
+                        >
+                        <button id="verifyBtn" class="btn-primary">
+                            <span class="btn-text">Verify</span>
+                            <span class="btn-loader" style="display: none;">⏳</span>
+                        </button>
+                    </div>
+                    <div id="errorMsg" class="error-message" style="display: none;"></div>
+                </div>
+
+                <div id="resultSection" class="result-section" style="display: none;">
+                    <div class="result-header">
+                        <h2>Verification Result</h2>
+                        <span id="resultBadge" class="badge"></span>
+                    </div>
+
+                    <div class="result-details">
+                        <div class="detail-row">
+                            <span class="label">Email:</span>
+                            <span id="resultEmail" class="value"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Status:</span>
+                            <span id="resultStatus" class="value"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Subresult:</span>
+                            <span id="resultSubresult" class="value"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Domain:</span>
+                            <span id="resultDomain" class="value"></span>
+                        </div>
+                        <div class="detail-row" id="mxRow" style="display: none;">
+                            <span class="label">MX Records:</span>
+                            <span id="resultMX" class="value"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Execution Time:</span>
+                            <span id="resultTime" class="value"></span>
+                        </div>
+                        <div class="detail-row" id="errorRow" style="display: none;">
+                            <span class="label">Error:</span>
+                            <span id="resultError" class="value error-text"></span>
+                        </div>
+                        <div class="detail-row" id="suggestionRow" style="display: none;">
+                            <span class="label">Did You Mean:</span>
+                            <span id="resultSuggestion" class="value suggestion-text"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Timestamp:</span>
+                            <span id="resultTimestamp" class="value"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Typo Detection</h3>
+                <p class="info-text">Get suggestions for common email typos</p>
+                <div class="input-group">
+                    <input 
+                        type="email" 
+                        id="typoInput" 
+                        placeholder="user@gmial.com"
+                        autocomplete="off"
+                    >
+                    <button id="typoBtn" class="btn-secondary">
+                        Check Typo
+                    </button>
+                </div>
+                <div id="typoResult" class="typo-result" style="display: none;"></div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Email Verification API - Built with Node.js & Express</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
