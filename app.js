@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = 'https://warewe-backe.onrender.com';
 
 // DOM Elements
 const emailInput = document.getElementById('emailInput');
@@ -93,6 +93,16 @@ async function checkTypo() {
     
     if (!email) {
         typoResult.style.display = 'none';
+        return;
+    }
+
+    // Validate email format (must contain @)
+    if (!email.includes('@')) {
+        typoResult.className = 'typo-result no-suggestion';
+        typoResult.innerHTML = `
+            <p style="color: #e74c3c;"><strong>Invalid format:</strong> "${email}" is not a valid email address. Please enter an email with @ symbol (e.g., user@example.com)</p>
+        `;
+        typoResult.style.display = 'block';
         return;
     }
 
