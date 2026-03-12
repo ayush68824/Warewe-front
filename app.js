@@ -117,12 +117,22 @@ async function checkTypo() {
 
         const data = await response.json();
 
-        if (data.success && data.data) {
+        if (data.success !== undefined && data.data) {
             displayTypoResult(data.data);
+        } else if (data.error) {
+            typoResult.className = 'typo-result no-suggestion';
+            typoResult.innerHTML = `<p style="color: #e74c3c;">Error: ${data.error}</p>`;
+            typoResult.style.display = 'block';
+        } else {
+            // Fallback if no data
+            typoResult.className = 'typo-result no-suggestion';
+            typoResult.innerHTML = '<p>Unable to process request. Please try again.</p>';
+            typoResult.style.display = 'block';
         }
     } catch (error) {
         console.error('Error:', error);
-        typoResult.innerHTML = '<p style="color: #e74c3c;">Failed to connect to the server.</p>';
+        typoResult.className = 'typo-result no-suggestion';
+        typoResult.innerHTML = '<p style="color: #e74c3c;">Failed to connect to the server. Make sure the backend is running.</p>';
         typoResult.style.display = 'block';
     }
 }
@@ -137,11 +147,12 @@ function displayResult(data) {
     resultTimestamp.textContent = new Date(data.timestamp).toLocaleString();
 
     // MX Records
-    if (data.mxRecords && data.mxRecords.length > 0) {
+    if (data.mxRecords && Array.isArray(data.mxRecords) && data.mxRecords.length > 0) {
         resultMX.textContent = data.mxRecords.join(', ');
         mxRow.style.display = 'flex';
     } else {
-        mxRow.style.display = 'none';
+        resultMX.textContent = 'None';
+        mxRow.style.display = 'flex'; // Always show MX row, even if empty
     }
 
     // Error
@@ -175,10 +186,17 @@ function displayResult(data) {
 
 // Display typo result
 function displayTypoResult(data) {
-    if (data.hasSuggestion) {
+    if (!data) {
+        typoResult.className = 'typo-result no-suggestion';
+        typoResult.innerHTML = '<p>No data received from server.</p>';
+        typoResult.style.display = 'block';
+        return;
+    }
+
+    if (data.hasSuggestion && data.suggestion) {
         typoResult.className = 'typo-result has-suggestion';
         typoResult.innerHTML = `
-            <p><strong>Original:</strong> ${data.original}</p>
+            <p><strong>Original:</strong> ${data.original || 'N/A'}</p>
             <p><strong>Suggestion:</strong> <span style="color: #667eea; font-weight: 600;">${data.suggestion}</span></p>
             <button class="btn-primary" style="margin-top: 10px; width: 100%;" onclick="useSuggestion('${data.suggestion}')">
                 Use This Email
@@ -187,7 +205,7 @@ function displayTypoResult(data) {
     } else {
         typoResult.className = 'typo-result no-suggestion';
         typoResult.innerHTML = `
-            <p>No typo detected. "${data.original}" looks correct!</p>
+            <p>No typo detected. "${data.original || 'N/A'}" looks correct!</p>
         `;
     }
     typoResult.style.display = 'block';
@@ -240,10 +258,19 @@ emailInput.addEventListener('keypress', (e) => {
 });
 
 typoBtn.addEventListener('click', checkTypo);
-typoInput.addEventListener('input', () => {
-    if (typoInput.value.trim()) {
+typoInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
         checkTypo();
-    } else {
+    }
+});
+typoInput.addEventListener('input', () => {
+    // Debounce for real-time checking
+    clearTimeout(typoInput.debounceTimer);
+    if (typoInput.value.trim() && typoInput.value.includes('@')) {
+        typoInput.debounceTimer = setTimeout(() => {
+            checkTypo();
+        }, 500); // Wait 500ms after user stops typing
+    } else if (!typoInput.value.trim()) {
         typoResult.style.display = 'none';
     }
 });
