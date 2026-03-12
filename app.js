@@ -146,13 +146,12 @@ function displayResult(data) {
     resultTime.textContent = `${data.executiontime}s`;
     resultTimestamp.textContent = new Date(data.timestamp).toLocaleString();
 
-    // MX Records
+    // MX Records - Always show, even if empty
+    mxRow.style.display = 'flex';
     if (data.mxRecords && Array.isArray(data.mxRecords) && data.mxRecords.length > 0) {
         resultMX.textContent = data.mxRecords.join(', ');
-        mxRow.style.display = 'flex';
     } else {
         resultMX.textContent = 'None';
-        mxRow.style.display = 'flex'; // Always show MX row, even if empty
     }
 
     // Error
